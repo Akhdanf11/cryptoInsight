@@ -1,0 +1,14 @@
+flavors:
+  dev:
+    app:
+      name: "Cryptho Insight App"
+
+    android:
+      applicationId: "com.example.crptoinsight"
+
+  prod:
+    app:
+      name: "Cryptho Insight App"
+
+    android:
+      applicationId: "com.example.crptoinsight"

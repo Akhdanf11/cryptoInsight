@@ -1,0 +1,28 @@
+name: cryptoinsight
+version: 1.0.0+1
+publish_to: none
+description: A new Flutter project.
+environment: 
+  sdk: ^3.5.3
+
+dependencies: 
+  cupertino_icons: ^1.0.8
+  flutter_flavorizr: ^2.2.3
+  refreshed: 2.9.0
+  flutter: 
+    sdk: flutter
+  file_picker: ^8.1.4
+  permission_handler: ^10.0.0
+  path_provider: ^2.0.11
+  docx_to_text: ^1.0.1
+  google_fonts: ^6.2.1
+
+dev_dependencies:
+  build_runner: ^2.4.13
+  flutter_lints: ^4.0.0
+  flutter_test: 
+    sdk: flutter
+
+flutter: 
+  uses-material-design: true
+
