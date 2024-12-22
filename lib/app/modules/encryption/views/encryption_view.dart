@@ -76,7 +76,7 @@ class _EncryptionViewState extends State<EncryptionView> {
       });
       try {
         final start = DateTime.now();
-        keyDetails = await generateKeysAsync(bitSize);
+        keyDetails = await generateKeys(bitSize);
         final end = DateTime.now();
         keyGenerationTime = end.difference(start).inMilliseconds;
         _showSnackbar('Pembangkitan Kunci Berhasil.');

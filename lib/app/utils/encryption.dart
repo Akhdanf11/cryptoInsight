@@ -1,5 +1,7 @@
 import 'dart:math';
 
+import 'package:cryptoinsight/app/utils/randomBig.dart';
+
 BigInt encryptCharacter(int m, BigInt A1, BigInt A2, int k) {
   if (m >= 0) {
     BigInt lowerBound = BigInt.one << (4 * k);
@@ -11,21 +13,6 @@ BigInt encryptCharacter(int m, BigInt A1, BigInt A2, int k) {
   } else {
     throw Exception('Invalid plaintext character.');
   }
-}
-
-BigInt randomBigInt(BigInt min, BigInt max) {
-  BigInt diff = max - min;
-  int bitLength = diff.bitLength;
-  BigInt randomValue;
-  do {
-    randomValue = BigInt.parse(
-      List.generate((bitLength + 7) ~/ 8, (_) => Random.secure().nextInt(256))
-          .map((e) => e.toRadixString(16).padLeft(2, '0'))
-          .join(),
-      radix: 16,
-    );
-  } while (randomValue >= diff);
-  return min + randomValue;
 }
 
 String encryptString(String input, BigInt A1, BigInt A2, int k) {

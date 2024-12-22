@@ -1,42 +1,38 @@
-int bruteForceDecryptSerial(BigInt c, BigInt A1, BigInt A2) {
-  int k = 1;
-  bool found = false;
-  BigInt resultM = BigInt.zero;
-  int complexity = 0;
+import 'dart:math';
 
-  while (!found) {
-    BigInt upperBound = BigInt.one << (2 * k - 1);
-    BigInt m = BigInt.one;
+import 'package:cryptoinsight/app/utils/checkPrime.dart';
+import 'package:cryptoinsight/app/utils/modInverse.dart';
+import 'package:cryptoinsight/app/utils/squareRoot.dart';
 
-    while (!found && m < upperBound) {
-      BigInt leftSide = c - (A1 * m.pow(2));
-      if (leftSide % A2 == BigInt.zero) {
-        BigInt t = leftSide ~/ A2;
-        if (t >= BigInt.zero) {
-          resultM = m;
-          found = true;
+Map<String, BigInt> bruteForceDecrypt(BigInt A2, BigInt A1) {
+  print('Starting Brute Force Decryption for A2 = $A2, A1 = $A1');
+
+  for (BigInt p = BigInt.two; p <= sqrtBigInt(A2); p+= BigInt.one) {
+    if (A2 % p == BigInt.zero) {
+      BigInt pSquared = (p*p);
+      print(pSquared);
+      BigInt q = A2 ~/ pSquared;
+
+      // Validating the factors
+      if (pSquared != BigInt.one && q != BigInt.one && pSquared != A2 && q != A2) {
+        // Check if p and q are valid factors of A2
+        if (pSquared * q == A2) {
+          print('Found factors: p = $p, q = $q');
+
+          // Check if p is prime
+          if (isPrime(p)) {
+            print('p is valid: p = $p is prime.');
+            BigInt d = modInverse(A1, pSquared);
+
+            print('p^2 = $pSquared');
+            print('Calculated d = $d');
+
+            return {'p': p, 'q': q, 'd': d};
+          }
         }
       }
-      m += BigInt.one;
-    }
-    k++;
-  }
-
-  return found ? resultM.toInt() : -1;
-}
-
-Map<String, dynamic> bruteForceDecryptStringSerial(List<BigInt> ciphertexts, BigInt A1, BigInt A2) {
-  String resultText = '';
-
-  for (BigInt c in ciphertexts) {
-    int result = bruteForceDecryptSerial(c, A1, A2);
-    if (result != -1) {
-      resultText += String.fromCharCode(result);
     }
   }
 
-  return {
-    'text': resultText,
-  };
+  return {};
 }
-

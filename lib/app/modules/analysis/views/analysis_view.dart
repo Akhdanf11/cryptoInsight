@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:cryptoinsight/app/modules/analysis/controllers/analysis_controller.dart';
 import 'package:cryptoinsight/app/utils/bruteforce.dart';
 import 'package:cryptoinsight/app/utils/kraitchik.dart';
+import 'package:cryptoinsight/app/utils/modInverse.dart';
 import 'package:cryptoinsight/app/utils/parse_ciphertext.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -17,52 +18,54 @@ class AnalysisView extends StatefulWidget {
 
 class _AnalysisViewState extends State<AnalysisView> {
   final AnalysisController controller = Get.put(AnalysisController());
-  File? selectedFile;
-
-  Future<void> _pickFile() async {
-    FilePickerResult? result = await FilePicker.platform.pickFiles();
-    if (result != null && result.files.single.path != null) {
-      setState(() {
-        selectedFile = File(result.files.single.path!);
-      });
-      Get.snackbar('Success', 'File selected: ${result.files.single.name}');
-    } else {
-      Get.snackbar('Error', 'No file selected');
-    }
-  }
 
   Future<void> _processAnalysis() async {
-    if (selectedFile == null) {
-      Get.snackbar('Error', 'Please select a file first.');
+    if (controller.A2Controller.text.isEmpty || controller.A1Controller.text.isEmpty) {
+      Get.snackbar('Error', 'Please enter both A2 and A1 values.');
       return;
     }
 
     try {
-      List<BigInt> ciphertexts = await parseCiphertextFile(selectedFile!);
+      // Kosongkan hasil analisis
+      controller.bruteForceResult.value = '';
+      controller.kraitchikResult.value = '';
+      controller.elapsedBruteForce.value = 0;
+      controller.elapsedKraitchik.value = 0;
 
-      BigInt A1 = BigInt.parse(controller.A1Controller.text);
+      // Tampilkan loading
+      controller.isLoading.value = true;
+
       BigInt A2 = BigInt.parse(controller.A2Controller.text);
+      BigInt A1 = BigInt.parse(controller.A1Controller.text);
 
       // Brute Force Decryption
       final bruteStart = DateTime.now();
-      Map<String, dynamic> bruteResult = bruteForceDecryptStringSerial(ciphertexts, A1, A2);
+      Map<String, BigInt> bruteResult = bruteForceDecrypt(A2, A1);
       final bruteElapsed = DateTime.now().difference(bruteStart);
-      controller.bruteForceResult.value = bruteResult['text'];
+      controller.bruteForceResult.value = bruteResult.isEmpty
+          ? 'No result found.'
+          : 'p: ${bruteResult['p']}, q: ${bruteResult['q']}, d: ${bruteResult['d']}';
       controller.elapsedBruteForce.value = bruteElapsed.inMilliseconds;
 
       // Kraitchik Decryption
       final kraitchikStart = DateTime.now();
-      Map<String, dynamic> kraitchikResult = kraitchikDecryptString(ciphertexts, A1, A2);
+      Map<String, BigInt> kraitchikResult = kraitchikDecrypt(A2, A1);
       final kraitchikElapsed = DateTime.now().difference(kraitchikStart);
-      controller.kraitchikResult.value = kraitchikResult['text'];
-      // controller.kraitchikResultP.value = kraitchikResult['privateKeyP'];
+      controller.kraitchikResult.value = kraitchikResult.isEmpty
+          ? 'No result found.'
+          : 'p: ${kraitchikResult['p']}, q: ${kraitchikResult['q']}, d: ${kraitchikResult['d']}';
+
       controller.elapsedKraitchik.value = kraitchikElapsed.inMilliseconds;
 
       Get.snackbar('Success', 'Analysis completed successfully.');
     } catch (e) {
-      Get.snackbar('Error', 'Failed to analyze ciphertext: $e');
+      Get.snackbar('Error', 'Failed to process analysis: $e');
+    } finally {
+      // Sembunyikan loading
+      controller.isLoading.value = false;
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -92,7 +95,7 @@ class _AnalysisViewState extends State<AnalysisView> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Input fields for A1, A2
+              // Input fields for A2 and A1
               Card(
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
@@ -103,6 +106,7 @@ class _AnalysisViewState extends State<AnalysisView> {
                   child: Column(
                     children: [
                       _buildInputField(controller.A1Controller, 'Public Key A1'),
+                      const SizedBox(height: 16),
                       _buildInputField(controller.A2Controller, 'Public Key A2'),
                     ],
                   ),
@@ -111,35 +115,23 @@ class _AnalysisViewState extends State<AnalysisView> {
 
               const SizedBox(height: 16),
 
-              // File selection and processing buttons
+              // Process button
               ElevatedButton.icon(
-                onPressed: _pickFile,
-                icon: const Icon(Icons.file_open),
-                label: const Text('Select Ciphertext File'),
-                style: _buttonStyle(),
-              ),
-
-              if (selectedFile != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8.0),
-                  child: Text(
-                    'Selected File: ${selectedFile!.path}',
-                    style: GoogleFonts.poppins(fontSize: 14, color: Colors.black87),
-                  ),
-                ),
-
-              const SizedBox(height: 16),
-
-              ElevatedButton.icon(
-                onPressed: _processAnalysis,
+                onPressed: controller.isLoading.value ? null : _processAnalysis,
                 icon: const Icon(Icons.lock_open),
-                label: const Text('Process Analysis'),
+                label: Obx(() => controller.isLoading.value
+                    ? const CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 2,
+                )
+                    : const Text('Process Analysis')),
                 style: _buttonStyle(),
               ),
 
+
               const SizedBox(height: 16),
 
-              // Display decryption results and complexity
+              // Display brute force and kraitchik results
               Card(
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
@@ -149,10 +141,8 @@ class _AnalysisViewState extends State<AnalysisView> {
                   padding: const EdgeInsets.all(16.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [ 
+                    children: [
                       Obx(() => _buildResultField(controller.bruteForceResult.value, 'Brute Force Result')),
-                      const SizedBox(height: 8),
-                      // Obx(() => _buildResultField(controller.kraitchikResultP.value, 'Kraitchik Result P')),
                       const SizedBox(height: 8),
                       Obx(() => _buildResultField(controller.kraitchikResult.value, 'Kraitchik Result')),
                     ],
@@ -162,7 +152,7 @@ class _AnalysisViewState extends State<AnalysisView> {
 
               const SizedBox(height: 16),
 
-              // Display elapsed time and complexity
+              // Display elapsed time
               Card(
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
@@ -184,50 +174,6 @@ class _AnalysisViewState extends State<AnalysisView> {
                   ),
                 ),
               ),
-
-              const SizedBox(height: 16),
-
-              // Display Algorithm Complexity Information
-              Card(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                elevation: 6,
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Text(
-                        'Algorithm Complexity:',
-                        style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Brute Force Algorithm Complexity:',
-                        style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
-                      ),
-                      Text(
-                        'Worst Case: O(2^k)\n'
-                            'Average Case: O(2^k / 2)\n'
-                            'Best Case: O(1)',
-                        style: GoogleFonts.poppins(),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Kraitchik Algorithm Complexity:',
-                        style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
-                      ),
-                      Text(
-                        'Worst Case: O(m)\n'
-                            'Average Case: O(m / 2)\n'
-                            'Best Case: O(1)',
-                        style: GoogleFonts.poppins(),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
             ],
           ),
         ),
@@ -235,7 +181,7 @@ class _AnalysisViewState extends State<AnalysisView> {
     );
   }
 
-  // Build the input fields for A1 and A2
+  // Build the input field
   Widget _buildInputField(TextEditingController controller, String label) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -252,23 +198,24 @@ class _AnalysisViewState extends State<AnalysisView> {
     );
   }
 
-  // Build the result field for decryption results
+  // Build the result field
   Widget _buildResultField(String text, String label) {
-    return TextField(
-      controller: TextEditingController(text: text),
-      readOnly: true,
-      maxLines: 5,
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: GoogleFonts.poppins(),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+          Text(
+            text,
+            style: GoogleFonts.poppins(),
+          ),
+        ],
       ),
     );
   }
 
-  // Build the elapsed time row for each algorithm
+  // Build the elapsed time row
   Widget _buildElapsedTimeRow(String label, int value) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -292,5 +239,3 @@ class _AnalysisViewState extends State<AnalysisView> {
     );
   }
 }
-
-

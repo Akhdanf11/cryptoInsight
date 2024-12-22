@@ -35,7 +35,10 @@ class HomeView extends StatelessWidget {
                     icon: Icons.lock,
                     title: "Encryption",
                     color: Colors.blue,
-                    onTap: () => Get.toNamed('/encryption'),
+                    onTap: () {
+                      debugPrint('Encryption tapped');
+                      Get.toNamed('/encryption');
+                    },
                   ),
                   _buildFeatureCard(
                     icon: Icons.lock_open,
