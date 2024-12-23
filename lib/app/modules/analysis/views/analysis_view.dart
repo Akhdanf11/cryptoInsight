@@ -1,12 +1,8 @@
-import 'dart:io';
 import 'package:cryptoinsight/app/modules/analysis/controllers/analysis_controller.dart';
 import 'package:cryptoinsight/app/utils/bruteforce.dart';
 import 'package:cryptoinsight/app/utils/kraitchik.dart';
-import 'package:cryptoinsight/app/utils/modInverse.dart';
-import 'package:cryptoinsight/app/utils/parse_ciphertext.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:refreshed/refreshed.dart';
 
 class AnalysisView extends StatefulWidget {
@@ -21,7 +17,7 @@ class _AnalysisViewState extends State<AnalysisView> {
 
   Future<void> _processAnalysis() async {
     if (controller.A2Controller.text.isEmpty || controller.A1Controller.text.isEmpty) {
-      Get.snackbar('Error', 'Please enter both A2 and A1 values.');
+      Get.snackbar('Gagal', 'Harap masukkan nilai A2 dan A1.');
       return;
     }
 
@@ -43,36 +39,35 @@ class _AnalysisViewState extends State<AnalysisView> {
       Map<String, BigInt> bruteResult = bruteForceDecrypt(A2, A1);
       final bruteElapsed = DateTime.now().difference(bruteStart);
       controller.bruteForceResult.value = bruteResult.isEmpty
-          ? 'No result found.'
+          ? 'Tidak ditemukan hasil.'
           : 'p: ${bruteResult['p']}, q: ${bruteResult['q']}, d: ${bruteResult['d']}';
       controller.elapsedBruteForce.value = bruteElapsed.inMilliseconds;
 
       // Kraitchik Decryption
       final kraitchikStart = DateTime.now();
-      Map<String, BigInt> kraitchikResult = kraitchikDecrypt(A2, A1);
+      Map<String, BigInt> kraitchikResult = await kraitchikDecrypt(A2, A1);
       final kraitchikElapsed = DateTime.now().difference(kraitchikStart);
       controller.kraitchikResult.value = kraitchikResult.isEmpty
-          ? 'No result found.'
+          ? 'Tidak ditemukan hasil.'
           : 'p: ${kraitchikResult['p']}, q: ${kraitchikResult['q']}, d: ${kraitchikResult['d']}';
 
       controller.elapsedKraitchik.value = kraitchikElapsed.inMilliseconds;
 
-      Get.snackbar('Success', 'Analysis completed successfully.');
+      Get.snackbar('Berhasil', 'Proses analisis selesai.');
     } catch (e) {
-      Get.snackbar('Error', 'Failed to process analysis: $e');
+      Get.snackbar('Gagal', 'Gagal memproses analisis: $e');
     } finally {
       // Sembunyikan loading
       controller.isLoading.value = false;
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'Laman Analisis',
+          'Kriptanalisis',
           style: GoogleFonts.poppins(fontWeight: FontWeight.w400),
         ),
         centerTitle: true,
@@ -105,9 +100,9 @@ class _AnalysisViewState extends State<AnalysisView> {
                   padding: const EdgeInsets.all(16.0),
                   child: Column(
                     children: [
-                      _buildInputField(controller.A1Controller, 'Public Key A1'),
+                      _buildInputField(controller.A1Controller, 'Kunci Publik A1'),
                       const SizedBox(height: 16),
-                      _buildInputField(controller.A2Controller, 'Public Key A2'),
+                      _buildInputField(controller.A2Controller, 'Kunci Publik A2'),
                     ],
                   ),
                 ),
@@ -116,18 +111,21 @@ class _AnalysisViewState extends State<AnalysisView> {
               const SizedBox(height: 16),
 
               // Process button
-              ElevatedButton.icon(
+              Obx(() => ElevatedButton.icon(
                 onPressed: controller.isLoading.value ? null : _processAnalysis,
                 icon: const Icon(Icons.lock_open),
-                label: Obx(() => controller.isLoading.value
-                    ? const CircularProgressIndicator(
-                  color: Colors.white,
-                  strokeWidth: 2,
+                label: controller.isLoading.value
+                    ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    color: Colors.white,
+                    strokeWidth: 2,
+                  ),
                 )
-                    : const Text('Process Analysis')),
+                    : const Text('Proses Kriptanalisis'),
                 style: _buttonStyle(),
-              ),
-
+              )),
 
               const SizedBox(height: 16),
 
@@ -142,9 +140,9 @@ class _AnalysisViewState extends State<AnalysisView> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Obx(() => _buildResultField(controller.bruteForceResult.value, 'Brute Force Result')),
+                      Obx(() => _buildResultField(controller.bruteForceResult.value, 'Hasil Brute Force')),
                       const SizedBox(height: 8),
-                      Obx(() => _buildResultField(controller.kraitchikResult.value, 'Kraitchik Result')),
+                      Obx(() => _buildResultField(controller.kraitchikResult.value, 'Hasil Kraitchik')),
                     ],
                   ),
                 ),
@@ -160,15 +158,15 @@ class _AnalysisViewState extends State<AnalysisView> {
                 elevation: 6,
                 child: ListTile(
                   title: Text(
-                    'Elapsed Time Analysis (ms):',
+                    'Waktu Analisis (ms):',
                     style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
                   ),
                   subtitle: Column(
                     children: [
                       Obx(() => _buildElapsedTimeRow(
-                          'Brute Force Time', controller.elapsedBruteForce.value)),
+                          'Waktu Brute Force', controller.elapsedBruteForce.value)),
                       Obx(() => _buildElapsedTimeRow(
-                          'Kraitchik Time', controller.elapsedKraitchik.value)),
+                          'Waktu Kraitchik', controller.elapsedKraitchik.value)),
                       const SizedBox(height: 8),
                     ],
                   ),
@@ -181,7 +179,6 @@ class _AnalysisViewState extends State<AnalysisView> {
     );
   }
 
-  // Build the input field
   Widget _buildInputField(TextEditingController controller, String label) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -198,7 +195,6 @@ class _AnalysisViewState extends State<AnalysisView> {
     );
   }
 
-  // Build the result field
   Widget _buildResultField(String text, String label) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -215,7 +211,6 @@ class _AnalysisViewState extends State<AnalysisView> {
     );
   }
 
-  // Build the elapsed time row
   Widget _buildElapsedTimeRow(String label, int value) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -226,7 +221,6 @@ class _AnalysisViewState extends State<AnalysisView> {
     );
   }
 
-  // Button style
   ButtonStyle _buttonStyle() {
     return ElevatedButton.styleFrom(
       padding: const EdgeInsets.symmetric(vertical: 16),

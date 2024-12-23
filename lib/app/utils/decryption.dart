@@ -66,7 +66,7 @@ Map<String, dynamic> decryptCharacter(BigInt c, BigInt dPrime, BigInt p, BigInt 
   BigInt m_p = modularExponentiation(w, (p + BigInt.one) ~/ BigInt.from(4), p);
 
   // Step 3: Calculate i
-  BigInt m_p_squared = m_p * m_p; // Avoid using pow directly
+  BigInt m_p_squared = m_p * m_p;
   BigInt i = (w - m_p_squared) ~/ p;
 
   // Step 4: Calculate j

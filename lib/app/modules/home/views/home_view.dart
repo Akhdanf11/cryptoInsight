@@ -33,22 +33,19 @@ class HomeView extends StatelessWidget {
                 children: [
                   _buildFeatureCard(
                     icon: Icons.lock,
-                    title: "Encryption",
+                    title: "Enkripsi",
                     color: Colors.blue,
-                    onTap: () {
-                      debugPrint('Encryption tapped');
-                      Get.toNamed('/encryption');
-                    },
+                    onTap: () => Get.toNamed('/encryption'),
                   ),
                   _buildFeatureCard(
                     icon: Icons.lock_open,
-                    title: "Decryption",
+                    title: "Dekripsi",
                     color: Colors.green,
                     onTap: () => Get.toNamed('/decryption'),
                   ),
                   _buildFeatureCard(
                     icon: Icons.analytics,
-                    title: "Analysis",
+                    title: "Kriptanalisis",
                     color: Colors.orange,
                     onTap: () => Get.toNamed('/analysis'),
                   ),

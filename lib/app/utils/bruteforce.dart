@@ -13,13 +13,13 @@ Map<String, BigInt> bruteForceDecrypt(BigInt A2, BigInt A1) {
       print(pSquared);
       BigInt q = A2 ~/ pSquared;
 
-      // Validating the factors
-      if (pSquared != BigInt.one && q != BigInt.one && pSquared != A2 && q != A2) {
-        // Check if p and q are valid factors of A2
+      // Validasi Faktor
+      if (pSquared !=   BigInt.one && q != BigInt.one && pSquared != A2 && q != A2) {
+        // Cek jika p dan q adalah faktor dari A2
         if (pSquared * q == A2) {
           print('Found factors: p = $p, q = $q');
 
-          // Check if p is prime
+          // cek jika p adalah prime
           if (isPrime(p)) {
             print('p is valid: p = $p is prime.');
             BigInt d = modInverse(A1, pSquared);

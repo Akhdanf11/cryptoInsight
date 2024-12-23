@@ -9,6 +9,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:flutter/services.dart'; // Import untuk clipboard
 import 'package:docx_to_text/docx_to_text.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:refreshed/refreshed.dart';
 
 class EncryptionView extends StatefulWidget {
   const EncryptionView({Key? key}) : super(key: key);
@@ -46,20 +47,20 @@ class _EncryptionViewState extends State<EncryptionView> {
           setState(() {
             plaintext = text;
           });
-          _showSnackbar('DOCX file berhasil dimuat dan dikonversi.');
+          Get.snackbar('Berhasil','DOCX file berhasil dimuat dan dikonversi.');
         } else if (result.files.single.extension == 'txt') {
           // For TXT file, directly read the text content
           String content = await file.readAsString();
           setState(() {
             plaintext = content;
           });
-          _showSnackbar('TXT file berhasil dimuat.');
+          Get.snackbar('Berhasil','TXT file berhasil dimuat.');
         }
       } else {
-        _showSnackbar('Tidak ada file fipilih.');
+        Get.snackbar('Gagal','Tidak ada file fipilih.');
       }
     } catch (e) {
-      _showSnackbar('Error file dipilih: $e');
+      Get.snackbar('Gagal','File Gagal dipilih: $e');
     } finally {
       setState(() {
         isLoading = false;
@@ -79,16 +80,16 @@ class _EncryptionViewState extends State<EncryptionView> {
         keyDetails = await generateKeys(bitSize);
         final end = DateTime.now();
         keyGenerationTime = end.difference(start).inMilliseconds;
-        _showSnackbar('Pembangkitan Kunci Berhasil.');
+        Get.snackbar('Success','Pembangkitan Kunci Berhasil.');
       } catch (e) {
-        _showSnackbar('Pembangkitan Kunci Gagal: $e');
+        Get.snackbar('Gagal','Pembangkitan Kunci Gagal: $e');
       } finally {
         setState(() {
           isLoading = false;
         });
       }
     } else {
-      _showSnackbar('Masukkan Kunci K');
+      Get.snackbar('Gagal','Masukkan Kunci K');
     }
   }
 
@@ -106,16 +107,16 @@ class _EncryptionViewState extends State<EncryptionView> {
         ciphertext = encryptString(plaintext!, A1, A2, bitSize);
         final end = DateTime.now();
         encryptionTime = end.difference(start).inMilliseconds;
-        _showSnackbar('Enkripsi Berhasil.');
+        Get.snackbar('Berhasil','Enkripsi Berhasil.');
       } catch (e) {
-        _showSnackbar('Gagal saat Enkripsi: $e');
+        Get.snackbar('Gagal','Gagal saat Enkripsi: $e');
       } finally {
         setState(() {
           isLoading = false;
         });
       }
     } else {
-      _showSnackbar('plaintext atau key details tidak ada.');
+      Get.snackbar('Gagal','plaintext atau key details tidak ada.');
     }
   }
 
@@ -128,27 +129,21 @@ class _EncryptionViewState extends State<EncryptionView> {
           File file = File('${directory.path}/ciphertext/ciphertext.txt');
           await file.create(recursive: true);
           await file.writeAsString(ciphertext!);
-          _showSnackbar('Ciphertext disimpan pada ${file.path}');
+          Get.snackbar('Berhasil','Ciphertext disimpan pada ${file.path}');
         } else {
-          _showSnackbar('Gagal menyimpan di penyipmanan.');
+          Get.snackbar('Gagal','Gagal menyimpan di penyipmanan.');
         }
       } else {
-        _showSnackbar('Akses penyimpanan ditolak.');
+        Get.snackbar('Gagal','Akses penyimpanan ditolak.');
       }
     } else {
-      _showSnackbar('Tidak ada ciphertext untuk disimpan.');
+      Get.snackbar('Gagal','Tidak ada ciphertext untuk disimpan.');
     }
-  }
-
-  void _showSnackbar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
   }
 
   Future<void> _copyToClipboard(String text) async {
     await Clipboard.setData(ClipboardData(text: text));
-    _showSnackbar('Disimpan di papan klip');
+    Get.snackbar('Berhasil','Disimpan di papan klip');
   }
 
   ButtonStyle _buttonStyle() {

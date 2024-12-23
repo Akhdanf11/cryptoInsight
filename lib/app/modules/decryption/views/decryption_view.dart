@@ -27,27 +27,27 @@ class _DecryptionViewState extends State<DecryptionView> {
   Future<void> _savePlaintextToFile() async {
     try {
       if (decryptedText.isEmpty) {
-        Get.snackbar('Error', 'No decrypted text available to save.');
+        Get.snackbar('Gagal', 'Tidak ada teks hasil dekripsi untuk disimpan.');
         return;
       }
 
       var status = await Permission.storage.request();
       if (!status.isGranted) {
-        Get.snackbar('Error', 'Storage permission denied.');
+        Get.snackbar('Gagal', 'Izin penyimpanan ditolak.');
         return;
       }
 
       Directory? directory = await getExternalStorageDirectory();
       if (directory == null) {
-        Get.snackbar('Error', 'Failed to get storage directory.');
+        Get.snackbar('Gagal', 'Gagal mendapatkan direktori penyimpanan.');
         return;
       }
 
-      final file = File('${directory.path}/decrypted_text.txt');
+      final file = File('${directory.path}/teks_hasil_dekripsi.txt');
       await file.writeAsString(decryptedText);
-      Get.snackbar('Success', 'Plaintext saved to: ${file.path}');
+      Get.snackbar('Berhasil', 'Teks berhasil disimpan di: ${file.path}');
     } catch (e) {
-      Get.snackbar('Error', 'Failed to save file: $e');
+      Get.snackbar('Gagal', 'Gagal menyimpan file: $e');
     }
   }
 
@@ -88,11 +88,11 @@ class _DecryptionViewState extends State<DecryptionView> {
                   padding: const EdgeInsets.all(16.0),
                   child: Column(
                     children: [
-                      _buildInputField(A1Controller, 'Public Key A1'),
-                      _buildInputField(A2Controller, 'Public Key A2'),
-                      _buildInputField(dController, 'Private Key d'),
-                      _buildInputField(pController, 'Prime p'),
-                      _buildInputField(kController, 'Key Length k'),
+                      _buildInputField(A1Controller, 'Kunci Publik A1'),
+                      _buildInputField(A2Controller, 'Kunci Publik A2'),
+                      _buildInputField(dController, 'Kunci Privat d'),
+                      _buildInputField(pController, 'Bilangan Prima p'),
+                      _buildInputField(kController, 'Panjang Kunci k'),
                     ],
                   ),
                 ),
@@ -108,11 +108,11 @@ class _DecryptionViewState extends State<DecryptionView> {
                       selectedFile = File(result.files.single.path!);
                     });
                   } else {
-                    Get.snackbar('Error', 'No file selected');
+                    Get.snackbar('Gagal', 'Tidak ada file yang dipilih');
                   }
                 },
                 icon: const Icon(Icons.file_open),
-                label: const Text('Select Ciphertext File'),
+                label: const Text('Pilih File Ciphertext'),
                 style: _buttonStyle(),
               ),
 
@@ -125,12 +125,12 @@ class _DecryptionViewState extends State<DecryptionView> {
                   ),
                   elevation: 6,
                   child: Padding(
-                    padding: const EdgeInsets.all(16.0), // Add padding inside the card
+                    padding: const EdgeInsets.all(16.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Selected File: ${selectedFile!.path}',
+                          'File yang Dipilih: ${selectedFile!.path}',
                           style: GoogleFonts.poppins(fontSize: 14, color: Colors.black87),
                         ),
                       ],
@@ -138,13 +138,12 @@ class _DecryptionViewState extends State<DecryptionView> {
                   ),
                 ),
 
-
               const SizedBox(height: 16),
 
               ElevatedButton.icon(
                 onPressed: () async {
                   if (selectedFile == null) {
-                    Get.snackbar('Error', 'Please select a file');
+                    Get.snackbar('Gagal', 'Silakan pilih file terlebih dahulu');
                     return;
                   }
                   try {
@@ -160,16 +159,16 @@ class _DecryptionViewState extends State<DecryptionView> {
                     setState(() {
                       decryptedText = plaintext;
                     });
-                    Get.snackbar('Success', 'Decryption completed.');
+                    Get.snackbar('Berhasil', 'Dekripsi selesai.');
                   } catch (e) {
                     setState(() {
-                      decryptedText = 'Decryption failed: $e';
+                      decryptedText = 'Dekripsi gagal: $e';
                     });
-                    Get.snackbar('Error', 'Decryption failed: $e');
+                    Get.snackbar('Gagal', 'Dekripsi gagal: $e');
                   }
                 },
                 icon: const Icon(Icons.lock_open),
-                label: const Text('Decrypt'),
+                label: const Text('Dekripsi'),
                 style: _buttonStyle(),
               ),
 
@@ -187,7 +186,7 @@ class _DecryptionViewState extends State<DecryptionView> {
                     readOnly: true,
                     maxLines: 10,
                     decoration: InputDecoration(
-                      labelText: 'Decrypted Text',
+                      labelText: 'Teks Hasil Dekripsi',
                       labelStyle: GoogleFonts.poppins(),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -202,7 +201,7 @@ class _DecryptionViewState extends State<DecryptionView> {
               ElevatedButton.icon(
                 onPressed: _savePlaintextToFile,
                 icon: const Icon(Icons.save),
-                label: const Text('Save Plaintext to File'),
+                label: const Text('Simpan Teks ke File'),
                 style: _buttonStyle(),
               ),
             ],
