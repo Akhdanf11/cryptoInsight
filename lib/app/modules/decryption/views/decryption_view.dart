@@ -31,21 +31,22 @@ class _DecryptionViewState extends State<DecryptionView> {
         return;
       }
 
-      var status = await Permission.storage.request();
-      if (!status.isGranted) {
-        Get.snackbar('Gagal', 'Izin penyimpanan ditolak.');
+      // Memilih direktori tujuan dengan FilePicker
+      String? outputPath = await FilePicker.platform.getDirectoryPath();
+
+      if (outputPath == null) {
+        Get.snackbar('Gagal', 'Penyimpanan dibatalkan oleh pengguna.');
         return;
       }
 
-      Directory? directory = await getExternalStorageDirectory();
-      if (directory == null) {
-        Get.snackbar('Gagal', 'Gagal mendapatkan direktori penyimpanan.');
-        return;
-      }
+      // Tentukan nama file dan path tujuan
+      final filePath = '$outputPath/teks_hasil_dekripsi.txt';
+      final file = File(filePath);
 
-      final file = File('${directory.path}/teks_hasil_dekripsi.txt');
+      // Tulis decryptedText ke file
       await file.writeAsString(decryptedText);
-      Get.snackbar('Berhasil', 'Teks berhasil disimpan di: ${file.path}');
+
+      Get.snackbar('Berhasil', 'Teks berhasil disimpan di: $filePath');
     } catch (e) {
       Get.snackbar('Gagal', 'Gagal menyimpan file: $e');
     }
@@ -56,7 +57,7 @@ class _DecryptionViewState extends State<DecryptionView> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'Laman Dekripsi',
+          'Dekripsi',
           style: GoogleFonts.poppins(fontWeight: FontWeight.w400),
         ),
         centerTitle: true,
@@ -91,7 +92,7 @@ class _DecryptionViewState extends State<DecryptionView> {
                       _buildInputField(A1Controller, 'Kunci Publik A1'),
                       _buildInputField(A2Controller, 'Kunci Publik A2'),
                       _buildInputField(dController, 'Kunci Privat d'),
-                      _buildInputField(pController, 'Bilangan Prima p'),
+                      _buildInputField(pController, 'Kunci Privat p'),
                       _buildInputField(kController, 'Panjang Kunci k'),
                     ],
                   ),

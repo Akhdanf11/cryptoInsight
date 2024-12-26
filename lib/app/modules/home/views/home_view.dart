@@ -1,4 +1,6 @@
+import 'package:cryptoinsight/Permission_req.dart';
 import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:refreshed/refreshed.dart';
 import '../controllers/home_controller.dart';
 
@@ -9,6 +11,11 @@ class HomeView extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = Get.find<HomeController>();
     final theme = Theme.of(context);
+
+    // Meminta izin akses penyimpanan saat halaman pertama kali dibuka
+    Future.delayed(Duration.zero, () async {
+      await PermissionRequestHandler.requestManageStoragePermission(context);
+    });
 
     return Scaffold(
       appBar: AppBar(
@@ -35,13 +42,19 @@ class HomeView extends StatelessWidget {
                     icon: Icons.lock,
                     title: "Enkripsi",
                     color: Colors.blue,
-                    onTap: () => Get.toNamed('/encryption'),
+                    onTap: () async {
+                      await PermissionRequestHandler.requestManageStoragePermission(context);
+                      Get.toNamed('/encryption');
+                    },
                   ),
                   _buildFeatureCard(
                     icon: Icons.lock_open,
                     title: "Dekripsi",
                     color: Colors.green,
-                    onTap: () => Get.toNamed('/decryption'),
+                    onTap: () async {
+                      await PermissionRequestHandler.requestManageStoragePermission(context);
+                      Get.toNamed('/decryption');
+                    },
                   ),
                   _buildFeatureCard(
                     icon: Icons.analytics,
@@ -58,6 +71,18 @@ class HomeView extends StatelessWidget {
       ),
     );
   }
+
+  // Future<void> _requestManageStoragePermission() async {
+  //   var status = await Permission.manageExternalStorage.request();
+  //   if (!status.isGranted) {
+  //     Get.snackbar(
+  //       "Izin Diperlukan",
+  //       "Aplikasi memerlukan izin untuk mengakses penyimpanan.",
+  //       snackPosition: SnackPosition.bottom,
+  //
+  //     );
+  //   }
+  // }
 
   Widget _buildFeatureCard({
     required IconData icon,
@@ -86,7 +111,7 @@ class HomeView extends StatelessWidget {
               Text(
                 title,
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   color: Colors.black87,
                 ),

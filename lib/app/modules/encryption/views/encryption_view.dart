@@ -4,9 +4,7 @@ import 'package:cryptoinsight/app/utils/encryption.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:cryptoinsight/app/utils/key_generation.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:flutter/services.dart'; // Import untuk clipboard
+import 'package:flutter/services.dart';
 import 'package:docx_to_text/docx_to_text.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:refreshed/refreshed.dart';
@@ -57,7 +55,7 @@ class _EncryptionViewState extends State<EncryptionView> {
           Get.snackbar('Berhasil','TXT file berhasil dimuat.');
         }
       } else {
-        Get.snackbar('Gagal','Tidak ada file fipilih.');
+        Get.snackbar('Gagal','Tidak ada file dipilih.');
       }
     } catch (e) {
       Get.snackbar('Gagal','File Gagal dipilih: $e');
@@ -122,24 +120,29 @@ class _EncryptionViewState extends State<EncryptionView> {
 
   Future<void> _saveCiphertext() async {
     if (ciphertext != null && ciphertext!.isNotEmpty) {
-      var status = await Permission.storage.request();
-      if (status.isGranted) {
-        Directory? directory = await getExternalStorageDirectory();
-        if (directory != null) {
-          File file = File('${directory.path}/ciphertext/ciphertext.txt');
-          await file.create(recursive: true);
+      try {
+        String? outputPath = await FilePicker.platform.getDirectoryPath();
+
+        if (outputPath != null) {
+          // Tentukan nama file dan path tujuan
+          String filePath = '$outputPath/ciphertext.txt';
+          File file = File(filePath);
+
+          // Tulis ciphertext ke file
           await file.writeAsString(ciphertext!);
-          Get.snackbar('Berhasil','Ciphertext disimpan pada ${file.path}');
+
+          Get.snackbar('Berhasil', 'Ciphertext berhasil disimpan di $filePath');
         } else {
-          Get.snackbar('Gagal','Gagal menyimpan di penyipmanan.');
+          Get.snackbar('Gagal', 'Penyimpanan dibatalkan oleh pengguna.');
         }
-      } else {
-        Get.snackbar('Gagal','Akses penyimpanan ditolak.');
+      } catch (e) {
+        Get.snackbar('Gagal', 'Terjadi kesalahan saat menyimpan file: $e');
       }
     } else {
-      Get.snackbar('Gagal','Tidak ada ciphertext untuk disimpan.');
+      Get.snackbar('Gagal', 'Tidak ada ciphertext untuk disimpan.');
     }
   }
+
 
   Future<void> _copyToClipboard(String text) async {
     await Clipboard.setData(ClipboardData(text: text));
@@ -163,7 +166,7 @@ class _EncryptionViewState extends State<EncryptionView> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'Laman Enkripsi',
+          'Enkripsi',
           style: GoogleFonts.poppins(fontWeight: FontWeight.w400),
         ),
         centerTitle: true,
