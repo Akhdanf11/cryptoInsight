@@ -14,7 +14,7 @@ Map<String, BigInt> bruteForceDecrypt(BigInt A2, BigInt A1) {
       BigInt q = A2 ~/ pSquared;
 
       // Validasi Faktor
-      if (pSquared !=   BigInt.one && q != BigInt.one && pSquared != A2 && q != A2) {
+      if (pSquared != BigInt.one && q != BigInt.one && pSquared != A2 && q != A2) {
         // Cek jika p dan q adalah faktor dari A2
         if (pSquared * q == A2) {
           print('Found factors: p = $p, q = $q');
